@@ -73,6 +73,7 @@ def arguments_validator(params):
 def download(
     url_list: str,
     image_size: int = 256,
+    s3_path: Optional[str] = None,
     output_folder: str = "images",
     processes_count: int = 1,
     resize_mode: str = "border",
@@ -236,6 +237,7 @@ def download(
         save_caption=save_caption,
         extract_exif=extract_exif,
         output_folder=output_folder,
+        s3_path=s3_path,
         column_list=reader.column_list,
         timeout=timeout,
         number_sample_per_shard=number_sample_per_shard,

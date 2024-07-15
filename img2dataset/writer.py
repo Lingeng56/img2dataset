@@ -13,13 +13,13 @@ import webdataset as wds
 class BufferedParquetWriter:
     """Write samples to parquet files incrementally with a buffer"""
 
-    def __init__(self, output_file, schema, buffer_size=100):
+    def __init__(self, output_file, schema, session, buffer_size=100):
         self.buffer_size = buffer_size
         self.schema = schema
         self._initiatlize_buffer()
-        fs, output_path = fsspec.core.url_to_fs(output_file)
-        self.output_fd = fs.open(output_path, "wb")
-        self.parquet_writer = pq.ParquetWriter(self.output_fd, schema)
+        self.output_file = output_file
+        self.session = session
+
 
     def _initiatlize_buffer(self):
         self.current_buffer_size = 0
@@ -41,15 +41,17 @@ class BufferedParquetWriter:
             return
 
         df = pa.Table.from_pydict(self.buffer, self.schema)
-        self.parquet_writer.write_table(df)
+        writer = pa.BufferOutputStream()
+        pq.write_table(df, writer)
+        body = bytes(writer.getvalue())
+
+        parts = self.output_file[5:].split("/")
+        bucket, key = (parts[0], "/".join(parts[1:]))
+        self.session.put_object(Body=body, Bucket=bucket, Key=key)
         self._initiatlize_buffer()
 
     def close(self):
         self.flush()
-        if self.parquet_writer is not None:
-            self.parquet_writer.close()
-            self.parquet_writer = None
-            self.output_fd.close()
 
 
 class ParquetSampleWriter:
@@ -59,6 +61,7 @@ class ParquetSampleWriter:
         self,
         shard_id,
         output_folder,
+        s3_path,
         save_caption,
         oom_shard_count,
         schema,
@@ -70,8 +73,17 @@ class ParquetSampleWriter:
         shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
             shard_id=shard_id, oom_shard_count=oom_shard_count
         )
-        output_file = f"{output_folder}/{shard_name}.parquet"
-        self.buffered_parquet_writer = BufferedParquetWriter(output_file, schema, 100)
+        if s3_path is None:
+            output_file = f"{output_folder}/{shard_name}.parquet"
+        else:
+            output_file = f"{s3_path}/{shard_name}.parquet"
+        session = boto3.Session(
+            aws_access_key_id=os.environ['ACCESS_KEY'],
+            aws_secret_access_key=os.environ['SECRET_KEY'],
+            aws_session_token=os.environ['SESSION_TOKEN']
+        )
+        s3 = session.client("s3")
+        self.buffered_parquet_writer = BufferedParquetWriter(output_file, schema, s3, 100)
         self.save_caption = save_caption
 
     def write(self, img_str, key, caption, meta):

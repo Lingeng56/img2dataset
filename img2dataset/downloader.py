@@ -86,6 +86,7 @@ class Downloader:
         save_caption,
         extract_exif,
         output_folder,
+        s3_path,
         column_list,
         timeout,
         number_sample_per_shard,
@@ -104,6 +105,7 @@ class Downloader:
         self.save_caption = save_caption
         self.extract_exif = extract_exif
         self.output_folder = output_folder
+        self.s3_path = s3_path
         self.column_list = column_list
         self.timeout = timeout
         self.number_sample_per_shard = number_sample_per_shard
@@ -194,6 +196,7 @@ class Downloader:
         sample_writer = self.sample_writer_class(
             shard_id,
             self.output_folder,
+            self.s3_path,
             self.save_caption,
             self.oom_shard_count,
             schema,
