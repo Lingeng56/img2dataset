@@ -100,6 +100,7 @@ class Downloader:
         user_agent_token,
         disallowed_header_directives,
         blurring_bbox_col=None,
+        s3=None
     ) -> None:
         self.sample_writer_class = sample_writer_class
         self.resizer = resizer
@@ -123,12 +124,7 @@ class Downloader:
             else {directive.strip().lower() for directive in disallowed_header_directives}
         )
         self.blurring_bbox_col = blurring_bbox_col
-        session = boto3.Session(
-            aws_access_key_id=os.environ['ACCESS_KEY'],
-            aws_secret_access_key=os.environ['SECRET_KEY'],
-            region_name=os.environ['AWS_REGION']
-        )
-        self.s3 = session.client("s3")
+        self.s3 = s3
 
     def __call__(
         self,

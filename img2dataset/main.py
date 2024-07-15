@@ -3,6 +3,7 @@
 from typing import List, Optional
 import fire
 import logging
+import boto3
 from .logger import LoggerProcess
 from .resizer import Resizer
 from .blurrer import BoundingBoxBlurrer
@@ -230,6 +231,13 @@ def download(
         blurrer=blurrer,
     )
 
+    session = boto3.Session(
+        aws_access_key_id=os.environ['ACCESS_KEY'],
+        aws_secret_access_key=os.environ['SECRET_KEY'],
+        region_name=os.environ['AWS_REGION']
+    )
+    s3 = session.client("s3")
+
     downloader = Downloader(
         sample_writer_class=sample_writer_class,
         resizer=resizer,
@@ -249,6 +257,7 @@ def download(
         user_agent_token=user_agent_token,
         disallowed_header_directives=disallowed_header_directives,
         blurring_bbox_col=bbox_col,
+        s3=s3
     )
 
     print("Starting the downloading of this file")
