@@ -12,6 +12,7 @@ import hashlib
 import pyarrow as pa
 import traceback
 import boto3
+import os
 
 import fsspec
 from .logger import CappedCounter
