@@ -80,7 +80,7 @@ class ParquetSampleWriter:
         session = boto3.Session(
             aws_access_key_id=os.environ['ACCESS_KEY'],
             aws_secret_access_key=os.environ['SECRET_KEY'],
-            aws_session_token=os.environ['SESSION_TOKEN']
+            region_name=os.environ['AWS_REGION']
         )
         s3 = session.client("s3")
         self.buffered_parquet_writer = BufferedParquetWriter(output_file, schema, s3, 100)
