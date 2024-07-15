@@ -11,6 +11,7 @@ import time
 import hashlib
 import pyarrow as pa
 import traceback
+import boto3
 
 import fsspec
 from .logger import CappedCounter
@@ -121,6 +122,12 @@ class Downloader:
             else {directive.strip().lower() for directive in disallowed_header_directives}
         )
         self.blurring_bbox_col = blurring_bbox_col
+        session = boto3.Session(
+            aws_access_key_id=os.environ['ACCESS_KEY'],
+            aws_secret_access_key=os.environ['SECRET_KEY'],
+            region_name=os.environ['AWS_REGION']
+        )
+        self.s3 = session.client("s3")
 
     def __call__(
         self,
@@ -201,6 +208,7 @@ class Downloader:
             self.oom_shard_count,
             schema,
             self.encode_format,
+            self.s3
         )
         oom_sample_per_shard = math.ceil(math.log10(self.number_sample_per_shard))
         with ThreadPool(self.thread_count) as thread_pool:

@@ -67,6 +67,7 @@ class ParquetSampleWriter:
         oom_shard_count,
         schema,
         encode_format,
+        session,
     ):
         self.oom_shard_count = oom_shard_count
         self.encode_format = encode_format
@@ -78,13 +79,7 @@ class ParquetSampleWriter:
             output_file = f"{output_folder}/{shard_name}.parquet"
         else:
             output_file = f"{s3_path}/{shard_name}.parquet"
-        session = boto3.Session(
-            aws_access_key_id=os.environ['ACCESS_KEY'],
-            aws_secret_access_key=os.environ['SECRET_KEY'],
-            region_name=os.environ['AWS_REGION']
-        )
-        s3 = session.client("s3")
-        self.buffered_parquet_writer = BufferedParquetWriter(output_file, schema, s3, 100)
+        self.buffered_parquet_writer = BufferedParquetWriter(output_file, schema, session, 100)
         self.save_caption = save_caption
 
     def write(self, img_str, key, caption, meta):
