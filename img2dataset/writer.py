@@ -2,6 +2,7 @@
 
 import json
 import os
+import boto3
 
 import fsspec
 import numpy as np
